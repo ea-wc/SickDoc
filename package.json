@@ -1,0 +1,19 @@
+{
+  "name": "sickdoc",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SickDoc — a standalone telehealth prototype (Next.js + NestJS + Prisma + PostgreSQL)",
+  "packageManager": "pnpm@12.4.2",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build:shared": "pnpm --filter @sickdoc/shared build",
+    "dev": "pnpm build:shared && pnpm --parallel --filter @sickdoc/web --filter @sickdoc/api dev",
+    "build": "pnpm build:shared && pnpm --filter @sickdoc/api build && pnpm --filter @sickdoc/web build",
+    "lint": "pnpm -r --if-present lint",
+    "test": "pnpm -r --if-present test",
+    "db:migrate": "pnpm --filter @sickdoc/api prisma migrate dev",
+    "db:seed": "pnpm --filter @sickdoc/api prisma db seed"
+  }
+}

@@ -1,2 +1,35 @@
 /archive
 TASKS.md
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+.next/
+out/
+build/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Test & coverage
+coverage/
+test-results/
+playwright-report/
+
+# Misc
+.DS_Store
+.vscode/
+.idea/
+*.pem

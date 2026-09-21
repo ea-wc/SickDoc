@@ -1,0 +1,22 @@
+{
+  "name": "@sickdoc/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cross-cutting types, enums, error codes, and zod schemas shared by web and api.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}
