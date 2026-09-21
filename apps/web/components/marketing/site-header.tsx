@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 
 const NAV = [
   { href: "#how-it-works", label: "How it works" },
@@ -29,6 +30,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex shrink-0 items-center gap-2">
+          <ThemeToggle />
           <Button asChild variant="ghost" className="hidden sm:inline-flex">
             <Link href="/sign-in">Sign in</Link>
           </Button>

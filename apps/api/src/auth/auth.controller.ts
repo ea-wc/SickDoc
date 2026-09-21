@@ -13,12 +13,14 @@ import { REFRESH_COOKIE, REFRESH_COOKIE_PATH, TokenService } from './token.servi
 type CookieRequest = Request & { cookies?: Record<string, string> };
 
 /**
- * Public auth endpoints (docs/API_SPEC.md §3). Rate limited to 10 attempts per
- * 15 minutes, keyed by IP plus the submitted email.
+ * Public auth endpoints (docs/API_SPEC.md §3). The credential endpoints
+ * (register, login) are rate limited to 10 attempts per 15 minutes, keyed by IP
+ * plus the submitted email. Token refresh and logout are intentionally not
+ * throttled: they rotate an opaque token rather than accept credentials, and a
+ * shared IP bucket on refresh would lock out legitimate clients (e.g. the E2E
+ * suite, or a user with several open tabs).
  */
 @Controller('auth')
-@UseGuards(ThrottlerGuard)
-@Throttle(AUTH_THROTTLE)
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
@@ -27,6 +29,8 @@ export class AuthController {
 
   @Post('register/patient')
   @Public()
+  @UseGuards(ThrottlerGuard)
+  @Throttle(AUTH_THROTTLE)
   @HttpCode(HttpStatus.CREATED)
   async registerPatient(@Body() dto: RegisterPatientDto, @Res({ passthrough: true }) res: Response): Promise<AuthResponse> {
     const result = await this.authService.registerPatient(dto);
@@ -36,6 +40,8 @@ export class AuthController {
 
   @Post('register/doctor')
   @Public()
+  @UseGuards(ThrottlerGuard)
+  @Throttle(AUTH_THROTTLE)
   @HttpCode(HttpStatus.CREATED)
   async registerDoctor(@Body() dto: RegisterDoctorDto, @Res({ passthrough: true }) res: Response): Promise<AuthResponse> {
     const result = await this.authService.registerDoctor(dto);
@@ -45,6 +51,8 @@ export class AuthController {
 
   @Post('login')
   @Public()
+  @UseGuards(ThrottlerGuard)
+  @Throttle(AUTH_THROTTLE)
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response): Promise<AuthResponse> {
     const result = await this.authService.login(dto);

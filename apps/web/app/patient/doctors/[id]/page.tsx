@@ -121,6 +121,8 @@ export default function DoctorDetailPage() {
               <CardContent>
                 {slots.isLoading ? (
                   <Skeleton className="h-40 w-full" />
+                ) : slots.isError ? (
+                  <p className="py-8 text-center text-sm text-destructive">Could not load times. Try another date.</p>
                 ) : daySlots.length === 0 ? (
                   <p className="py-8 text-center text-sm text-muted-foreground">No times on this day.</p>
                 ) : (

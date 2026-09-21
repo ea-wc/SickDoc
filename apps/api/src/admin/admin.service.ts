@@ -149,30 +149,24 @@ export class AdminService {
       include: {
         patientProfile: true,
         doctorProfile: { include: { specializations: { include: { specialization: true } } } },
-        _count: { select: { appointments: false, notifications: true } },
+        _count: { select: { notifications: true } },
       },
     });
     if (!user) {
       throw new AppException(ErrorCodes.NOT_FOUND, "User not found");
     }
 
+    // Users hold at most one of a patient or doctor profile (admins neither).
+    // Build the ownership filter from whichever profile ids actually exist —
+    // an empty OR matches nothing, which is correct for administrators.
+    const ownershipOr: Prisma.AppointmentWhereInput[] = [];
+    if (user.patientProfile) ownershipOr.push({ patientProfileId: user.patientProfile.id });
+    if (user.doctorProfile) ownershipOr.push({ doctorProfileId: user.doctorProfile.id });
+
     const [appointmentCount, completedCount] = await Promise.all([
+      this.prisma.appointment.count({ where: { OR: ownershipOr } }),
       this.prisma.appointment.count({
-        where: {
-          OR: [
-            { patientProfileId: user.patientProfile?.id ?? "" },
-            { doctorProfileId: user.doctorProfile?.id ?? "" },
-          ],
-        },
-      }),
-      this.prisma.appointment.count({
-        where: {
-          status: AppointmentStatus.COMPLETED,
-          OR: [
-            { patientProfileId: user.patientProfile?.id ?? "" },
-            { doctorProfileId: user.doctorProfile?.id ?? "" },
-          ],
-        },
+        where: { status: AppointmentStatus.COMPLETED, OR: ownershipOr },
       }),
     ]);
 

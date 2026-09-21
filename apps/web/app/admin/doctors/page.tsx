@@ -13,8 +13,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/shared/error-state";
+import { EmptyState } from "@/components/shared/empty-state";
 import { PageContainer } from "@/components/shared/page-container";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { Stethoscope } from "lucide-react";
 
 interface AdminDoctor {
   id: string;
@@ -76,6 +78,8 @@ export default function AdminDoctorsPage() {
         <Skeleton className="h-64 w-full" />
       ) : doctors.isError ? (
         <ErrorState message={(doctors.error as Error).message} onRetry={() => void doctors.refetch()} />
+      ) : doctors.data?.data.length === 0 ? (
+        <EmptyState icon={Stethoscope} title="No doctors found" description="Try adjusting the status filter." />
       ) : (
         <div className="space-y-4">
           {doctors.data?.data.map((doctor) => (

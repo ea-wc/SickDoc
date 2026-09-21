@@ -13,8 +13,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ErrorState } from "@/components/shared/error-state";
+import { EmptyState } from "@/components/shared/empty-state";
 import { PageContainer } from "@/components/shared/page-container";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { CalendarClock } from "lucide-react";
 
 interface AdminAppointment {
   id: string;
@@ -85,6 +87,8 @@ export default function AdminAppointmentsPage() {
         <Skeleton className="h-64 w-full" />
       ) : appointments.isError ? (
         <ErrorState message={(appointments.error as Error).message} onRetry={() => void appointments.refetch()} />
+      ) : appointments.data?.data.length === 0 ? (
+        <EmptyState icon={CalendarClock} title="No appointments match" description="Try adjusting the filters." />
       ) : (
         <Card>
           <CardContent className="pt-6">

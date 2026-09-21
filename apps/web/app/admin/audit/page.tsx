@@ -9,7 +9,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ErrorState } from "@/components/shared/error-state";
+import { EmptyState } from "@/components/shared/empty-state";
 import { PageContainer } from "@/components/shared/page-container";
+import { ScrollText } from "lucide-react";
 
 interface AuditLog {
   id: string;
@@ -38,6 +40,8 @@ export default function AdminAuditPage() {
         <Skeleton className="h-64 w-full" />
       ) : logs.isError ? (
         <ErrorState message={(logs.error as Error).message} onRetry={() => void logs.refetch()} />
+      ) : logs.data?.data.length === 0 ? (
+        <EmptyState icon={ScrollText} title="No audit entries" description="Admin actions will appear here." />
       ) : (
         <Card>
           <CardContent className="pt-6">

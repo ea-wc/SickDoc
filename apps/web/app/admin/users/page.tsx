@@ -14,8 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ErrorState } from "@/components/shared/error-state";
+import { EmptyState } from "@/components/shared/empty-state";
 import { PageContainer } from "@/components/shared/page-container";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { Users } from "lucide-react";
 
 interface AdminUser {
   id: string;
@@ -94,6 +96,8 @@ export default function AdminUsersPage() {
         <Skeleton className="h-64 w-full" />
       ) : users.isError ? (
         <ErrorState message={(users.error as Error).message} onRetry={() => void users.refetch()} />
+      ) : users.data?.data.length === 0 ? (
+        <EmptyState icon={Users} title="No users found" description="Try a different search or filter." />
       ) : (
         <Card>
           <CardContent className="pt-6">

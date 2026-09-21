@@ -13,6 +13,7 @@
     "build": "pnpm build:shared && pnpm --filter @sickdoc/api build && pnpm --filter @sickdoc/web build",
     "lint": "pnpm -r --if-present lint",
     "test": "pnpm -r --if-present test",
+    "test:e2e": "pnpm build && pnpm --filter @sickdoc/web test:e2e",
     "db:migrate": "pnpm --filter @sickdoc/api prisma:migrate",
     "db:seed": "pnpm --filter @sickdoc/api db:seed"
   }

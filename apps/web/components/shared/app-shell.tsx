@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { InitialsAvatar } from "@/components/shared/initials-avatar";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 
 export interface NavItem {
   title: string;
@@ -89,7 +90,9 @@ export function AppShell({
             <span className="text-sm font-medium">{badge ?? "Portal"}</span>
           </div>
 
-          <DropdownMenu>
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 rounded-full p-1 outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 <InitialsAvatar displayName={user.displayName} color={user.avatarColor} size="sm" />
@@ -107,6 +110,7 @@ export function AppShell({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         </header>
         <main className="min-w-0 flex-1">{children}</main>
       </div>
