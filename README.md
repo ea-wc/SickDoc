@@ -96,6 +96,44 @@ All credentials are placeholders, not secrets.
 
 More doctors use `dr.<lastname>@sickdoc.dev` and patients use `<firstname>@sickdoc.dev` — see `apps/api/prisma/seed.ts` for the full roster.
 
+## Deployment — Docker Compose
+
+The whole stack (Postgres + API + web) runs from a single command — no local Node, pnpm, or Postgres needed.
+
+### Prerequisites
+
+- Docker with the Compose plugin (`docker compose`)
+
+### The three commands
+
+```bash
+git clone <your-repo-url> sickdoc
+cd sickdoc
+cp .env.example .env        # optional — the defaults in docker-compose.yml are safe
+docker compose up --build
+```
+
+On first boot the API container runs `prisma migrate deploy && prisma db seed`, then the web container starts. Open **http://localhost:3000** and sign in with the seed credentials above.
+
+### Ports
+
+| Service | Host port | Purpose |
+|---|---|---|
+| Web | 3000 | Next.js app |
+| API | 3001 | REST API (global `/api` prefix) |
+| Postgres | 5432 | database — override with `POSTGRES_PORT` |
+
+### Troubleshooting
+
+- **Port 5432 already in use** (e.g. a local Postgres): start with
+  `POSTGRES_PORT=5433 docker compose up --build`, or stop the local Postgres.
+- **Data persists** across restarts in the named volume — `docker compose down`
+  then `docker compose up` keeps the database intact.
+- **Reset everything from zero**: `docker compose down -v && docker compose up --build`.
+- **Logs**: `docker compose logs -f api` and `docker compose logs -f web`.
+- The API healthcheck is at `http://localhost:3001/api/health` (returns
+  `{"status":"ok","database":"up"}` when ready).
+
 ## Project structure
 
 ```

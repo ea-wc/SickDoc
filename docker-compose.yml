@@ -7,7 +7,9 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sickdoc}
       POSTGRES_DB: ${POSTGRES_DB:-sickdoc}
     ports:
-      - "5432:5432"
+      # Host port is configurable so the container can coexist with a local
+      # Postgres already bound to 5432 (e.g. `POSTGRES_PORT=5433`).
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
@@ -15,6 +17,55 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sickdoc}:${POSTGRES_PASSWORD:-sickdoc}@db:5432/${POSTGRES_DB:-sickdoc}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-900}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-604800}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >
+          node -e 'fetch("http://127.0.0.1:3001/api/health")
+          .then(r => process.exit(r.ok ? 0 : 1))
+          .catch(() => process.exit(1))'
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      # The entrypoint runs `prisma migrate deploy && seed` before the server
+      # starts, so allow generous startup time.
+      start_period: 90s
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # Inlined into the client bundle at build time; must be the browser-
+        # reachable origin (the API's published host port).
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api}
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api}
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
 
 volumes:
   db_data:

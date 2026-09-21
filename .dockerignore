@@ -1,0 +1,30 @@
+# VCS
+.git
+.gitignore
+
+# Dependencies — installed fresh inside the image, never copied from the host
+**/node_modules
+
+# Build output — rebuilt inside the image
+**/dist
+**/.next
+**/*.tsbuildinfo
+
+# Secrets — never bake into an image
+.env
+.env.*
+**/.env
+**/.env.*
+**/*.pem
+
+# Test & coverage artifacts
+**/coverage
+**/test-results
+**/playwright-report
+
+# Misc / heavy
+archive
+TASKS.md
+docs/screenshots
+.DS_Store
+*.log
