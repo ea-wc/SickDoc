@@ -162,6 +162,32 @@ export class NotificationsService implements OnModuleInit {
           body: "Your doctor's availability changed; an upcoming appointment may need to be rescheduled.",
           appointmentId: null,
         }));
+      case 'account.status_changed':
+        return [
+          {
+            userId: event.userId,
+            type: NotificationType.ACCOUNT_STATUS_CHANGED,
+            title: 'Account status updated',
+            body:
+              event.status === 'ACTIVE'
+                ? 'Your account has been reactivated.'
+                : 'Your account has been ' + event.status.toLowerCase() + '.',
+            appointmentId: null,
+          },
+        ];
+      case 'doctor.reviewed':
+        return [
+          {
+            userId: event.userId,
+            type: NotificationType.DOCTOR_PROFILE_REVIEWED,
+            title: event.decision === 'APPROVED' ? 'Profile approved' : 'Profile not approved',
+            body:
+              event.decision === 'APPROVED'
+                ? 'Your profile has been approved and is now visible to patients.'
+                : 'Your profile was not approved. You can edit it and resubmit for review.',
+            appointmentId: null,
+          },
+        ];
     }
   }
 }

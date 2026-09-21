@@ -13,4 +13,6 @@ export type DomainEvent =
   | { type: 'consultation.completed'; appointmentId: string; patientUserId: string }
   | { type: 'note.available'; appointmentId: string; patientUserId: string }
   | { type: 'prescription.issued'; appointmentId: string; patientUserId: string }
-  | { type: 'schedule.changed'; patientUserIds: string[] };
+  | { type: 'schedule.changed'; patientUserIds: string[] }
+  | { type: 'account.status_changed'; userId: string; status: 'SUSPENDED' | 'DEACTIVATED' | 'ACTIVE' }
+  | { type: 'doctor.reviewed'; userId: string; decision: 'APPROVED' | 'REJECTED' };

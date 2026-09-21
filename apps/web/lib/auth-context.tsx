@@ -7,7 +7,7 @@ import { getSession, login as apiLogin, logout as apiLogout, onSessionChange, re
 interface AuthContextValue {
   user: UserSummary | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<UserSummary>;
   signOut: () => Promise<void>;
 }
 
@@ -28,6 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = React.useCallback(async (email: string, password: string) => {
     const next = await apiLogin(email, password);
     setUser(next.user);
+    return next.user;
   }, []);
 
   const signOut = React.useCallback(async () => {

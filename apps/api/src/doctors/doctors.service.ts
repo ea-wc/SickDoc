@@ -6,6 +6,7 @@ import { pageMeta, skipOf } from '../common/dto/pagination-query.dto.js';
 import { AvailabilityService } from '../availability/availability.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { DoctorSearchQueryDto } from './dto/doctor-query.dto.js';
+import { UpdateDoctorProfileDto } from './dto/update-doctor-profile.dto.js';
 
 const cardSelect = {
   id: true,
@@ -68,6 +69,72 @@ export class DoctorsService {
     private readonly prisma: PrismaService,
     private readonly availability: AvailabilityService,
   ) {}
+
+  /** Doctor self-service profile (docs/API_SPEC.md §10). */
+  async getMe(userId: string) {
+    const profile = await this.prisma.doctorProfile.findUnique({
+      where: { userId },
+      include: { specializations: { include: { specialization: true } } },
+    });
+    if (!profile) {
+      throw new AppException(ErrorCodes.NOT_FOUND, 'Doctor profile not found');
+    }
+    return profile;
+  }
+
+  async updateMe(userId: string, dto: UpdateDoctorProfileDto) {
+    const profile = await this.prisma.doctorProfile.findUnique({
+      where: { userId },
+      include: { specializations: { include: { specialization: true } } },
+    });
+    if (!profile) {
+      throw new AppException(ErrorCodes.NOT_FOUND, 'Doctor profile not found');
+    }
+
+    const data: Prisma.DoctorProfileUpdateInput = {};
+    if (dto.firstName !== undefined) data.firstName = dto.firstName;
+    if (dto.lastName !== undefined) data.lastName = dto.lastName;
+    if (dto.title !== undefined) data.title = dto.title || null;
+    if (dto.bio !== undefined) data.bio = dto.bio || null;
+    if (dto.yearsOfExperience !== undefined) data.yearsOfExperience = dto.yearsOfExperience;
+    if (dto.consultationFee !== undefined) data.consultationFee = dto.consultationFee;
+    if (dto.languages !== undefined) data.languages = dto.languages;
+    if (dto.timezone !== undefined) data.timezone = dto.timezone;
+
+    const changed =
+      Object.keys(data).length > 0 || dto.specializationIds !== undefined || dto.primarySpecializationId !== undefined;
+    if (changed && profile.status === DoctorStatus.REJECTED) {
+      data.status = DoctorStatus.PENDING;
+      data.reviewedBy = { disconnect: true };
+      data.reviewedAt = null;
+      data.reviewNote = null;
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.doctorProfile.update({ where: { id: profile.id }, data });
+
+      if (dto.specializationIds !== undefined || dto.primarySpecializationId !== undefined) {
+        const ids = dto.specializationIds ?? profile.specializations.map((s) => s.specializationId);
+        const primary =
+          dto.primarySpecializationId ?? profile.specializations.find((s) => s.isPrimary)?.specializationId ?? ids[0];
+        if (!ids.includes(primary)) {
+          throw new AppException(ErrorCodes.VALIDATION_FAILED, 'Primary specialization must be one of the selected specializations', [
+            { field: 'primarySpecializationId', issue: 'must be included in specializationIds' },
+          ]);
+        }
+        const existing = await tx.specialization.findMany({ where: { id: { in: ids } }, select: { id: true } });
+        if (existing.length !== new Set(ids).size) {
+          throw new AppException(ErrorCodes.VALIDATION_FAILED, 'One or more specializations are invalid');
+        }
+        await tx.doctorSpecialization.deleteMany({ where: { doctorProfileId: profile.id } });
+        await tx.doctorSpecialization.createMany({
+          data: ids.map((id) => ({ doctorProfileId: profile.id, specializationId: id, isPrimary: id === primary })),
+        });
+      }
+    });
+
+    return this.getMe(userId);
+  }
 
   async listSpecializations(): Promise<{ data: { id: string; slug: string; name: string; doctorCount: number }[] }> {
     const specializations = await this.prisma.specialization.findMany({
