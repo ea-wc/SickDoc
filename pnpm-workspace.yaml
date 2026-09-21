@@ -4,3 +4,10 @@ packages:
 
 allowBuilds:
   unrs-resolver: true
+  argon2: true
+  prisma: true
+  "@prisma/client": true
+  "@prisma/engines": true
+  esbuild: true
+  msgpackr-extract: true
+  workerd: true
