@@ -2,6 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { DomainEventsService } from './events/domain-events.service.js';
 import { AllExceptionsFilter } from './filters/all-exceptions.filter.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
 import { RolesGuard } from './guards/roles.guard.js';
@@ -30,12 +31,13 @@ const AUTH_THROTTLE_TTL = 15 * 60 * 1000; // 15 minutes
     }),
   ],
   providers: [
+    DomainEventsService,
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
     { provide: APP_INTERCEPTOR, useClass: RequestIdInterceptor },
     { provide: APP_PIPE, useFactory: () => buildValidationPipe() },
   ],
-  exports: [JwtModule],
+  exports: [JwtModule, DomainEventsService],
 })
 export class CommonModule {}
