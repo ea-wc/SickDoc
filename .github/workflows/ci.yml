@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint-and-test:
+    name: Lint & unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.4.2
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Unit tests import enums from the generated Prisma client, and both
+      # web + api resolve @sickdoc/shared from dist/, so generate + build first.
+      - name: Generate Prisma client
+        run: pnpm --filter @sickdoc/api prisma:generate
+
+      - name: Build shared package
+        run: pnpm build:shared
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Run unit tests
+        run: pnpm test
+
+  deploy:
+    name: Deploy to Fly.io
+    needs: lint-and-test
+    if: github.event_name != 'pull_request'
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit
