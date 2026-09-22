@@ -35,14 +35,16 @@ export default defineConfig({
       command: "node dist/main.js",
       cwd: "../api",
       url: `http://localhost:${API_PORT}/api/health`,
-      reuseExistingServer: !process.env.CI,
+      // Always start the freshly built API — reusing an already-running server
+      // (e.g. the Docker stack) silently runs tests against stale code.
+      reuseExistingServer: false,
       timeout: 60_000,
     },
     {
       command: `pnpm start -p ${PORT}`,
       cwd: ".",
       url: `http://localhost:${PORT}`,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
       timeout: 120_000,
     },
   ],

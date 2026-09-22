@@ -7,6 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "check:db": "node scripts/check-db.mjs",
+    "pretest:e2e": "node scripts/check-db.mjs",
+    "pretest:e2e:demo": "node scripts/check-db.mjs",
     "test:e2e": "playwright test --project=chromium",
     "test:e2e:demo": "DEMO_UI=true playwright test --project=demo"
   },

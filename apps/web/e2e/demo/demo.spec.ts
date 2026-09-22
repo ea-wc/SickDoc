@@ -1,6 +1,6 @@
 import { type Page } from "@playwright/test";
 import { test, expect } from "../fixtures";
-import { ADMIN, MONTHS, WEEKDAYS, beat, click, navigate, ordinal, typeInto, visible } from "../helpers";
+import { ADMIN, MONTHS, WEEKDAYS, beat, click, navigate, ordinal, say, typeInto, visible } from "../helpers";
 
 /**
  * Full end-to-end demo — one continuous, narrated journey through the SickDoc
@@ -81,9 +81,11 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
   await test.step("Doctor registers", async () => {
     await page.goto("/");
     await expect(page).toHaveTitle(/SickDoc/);
+    await say(page, "Welcome to SickDoc, a fictional telehealth prototype.");
     await navigate(page, page.getByRole("link", { name: "I'm a doctor" }));
     await page.waitForURL((url) => url.pathname === "/register/doctor");
     await expect(page.getByRole("heading", { name: "Register as a doctor" })).toBeVisible();
+    await say(page, "A doctor starts by registering their professional profile.");
 
     await typeInto(page, page.getByLabel("First name"), DOCTOR_FIRST);
     await typeInto(page, page.getByLabel("Last name"), DOCTOR_LAST);
@@ -100,11 +102,13 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await click(page, page.getByRole("button", { name: "Create doctor account" }));
     await page.waitForURL((url) => url.pathname === "/doctor");
     await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+    await say(page, "The account is created, but the profile is still pending review.");
 
     // The profile is still pending admin review.
     await navigate(page, page.locator("aside").getByRole("link", { name: "Profile" }));
     await page.waitForURL((url) => url.pathname === "/doctor/profile");
     await expect(page.getByText("Pending review")).toBeVisible();
+    await say(page, "Until an administrator approves the profile, the doctor cannot accept appointments.");
 
     await navigate(page, page.locator("aside").getByRole("link", { name: "Dashboard" }));
     await page.waitForURL((url) => url.pathname === "/doctor");
@@ -115,6 +119,7 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await navigate(page, page.locator("aside").getByRole("link", { name: "Schedule" }));
     await page.waitForURL((url) => url.pathname === "/doctor/schedule");
     await expect(page.getByRole("heading", { name: "Schedule" })).toBeVisible();
+    await say(page, "The doctor sets up a Monday to Friday schedule.");
     await expect(page.getByText("Weekly hours", { exact: true })).toBeVisible();
     await expect(page.getByText("Blocked times", { exact: true })).toBeVisible();
 
@@ -138,6 +143,7 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await navigate(page, page.locator("aside").getByRole("link", { name: "Doctor reviews" }));
     await page.waitForURL((url) => url.pathname === "/admin/doctors");
     await expect(page.getByRole("heading", { name: "Doctor reviews" })).toBeVisible();
+    await say(page, "The administrator reviews the pending doctor profiles.");
 
     // Locate the newly registered doctor's card by its unique email (the list
     // order is not guaranteed), then approve it.
@@ -150,18 +156,21 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await expect(page.getByRole("dialog")).toContainText(DOCTOR_DISPLAY);
     await click(page, page.getByRole("dialog").getByRole("button", { name: "Confirm" }));
     await expect(page.getByText(DOCTOR_EMAIL)).toHaveCount(0);
+    await say(page, "The doctor is approved and can now accept appointments.");
 
     // Switch to the approved list and search for the newly approved doctor.
     await click(page, page.getByRole("combobox"));
     await click(page, page.getByRole("option", { name: "Approved" }));
     await typeInto(page, page.getByPlaceholder("Search name or email"), DOCTOR_FIRST);
     await expect(page.getByText(DOCTOR_EMAIL)).toBeVisible();
+    await say(page, "The approved doctor now appears in the approved list.");
 
     await signOut(page, "Administrator");
   });
 
   // ── 4. Patient browses the product website ──────────────────────────────
   await test.step("Patient browses the product site", async () => {
+    await say(page, "Meanwhile, a patient explores the public website.");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("See the right doctor");
     await expect(page.getByRole("heading", { name: "How it works" })).toBeVisible();
     // Fictional-prototype trust messaging.
@@ -171,10 +180,12 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await navigate(page, page.getByRole("contentinfo").getByRole("link", { name: "Terms" }));
     await page.waitForURL((url) => url.pathname === "/terms");
     await expect(page.getByRole("heading", { name: "Terms of use" })).toBeVisible();
+    await say(page, "The patient reviews the terms of use.");
 
     await navigate(page, page.getByRole("contentinfo").getByRole("link", { name: "Privacy" }));
     await page.waitForURL((url) => url.pathname === "/privacy");
     await expect(page.getByRole("heading", { name: "Privacy policy" })).toBeVisible();
+    await say(page, "And the privacy policy.");
 
     await navigate(page, page.getByRole("link", { name: "SickDoc" }));
     await page.waitForURL((url) => url.pathname === "/");
@@ -185,6 +196,7 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await navigate(page, page.getByRole("link", { name: "Get started" }));
     await page.waitForURL((url) => url.pathname === "/register/patient");
     await expect(page.getByRole("heading", { name: "Register as a patient" })).toBeVisible();
+    await say(page, "The patient creates their account.");
 
     await typeInto(page, page.getByLabel("First name"), PATIENT_FIRST);
     await typeInto(page, page.getByLabel("Last name"), PATIENT_LAST);
@@ -200,6 +212,7 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await beat(page);
     await page.goto("/patient/profile");
     await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
+    await say(page, "The patient completes their basic profile.");
     await typeInto(page, page.locator('input[type="number"]').nth(0), "62");
     await typeInto(page, page.locator('input[type="number"]').nth(1), "168");
     await typeInto(page, page.locator("textarea"), "Mild asthma; otherwise healthy.");
@@ -216,6 +229,7 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await navigate(page, page.locator("aside").getByRole("link", { name: "Find a doctor" }));
     await page.waitForURL((url) => url.pathname === "/patient/doctors");
     await expect(page.getByRole("heading", { name: "Find a doctor" })).toBeVisible();
+    await say(page, "The patient searches for the newly approved doctor.");
 
     await typeInto(page, page.getByPlaceholder("Name or specialty"), DOCTOR_FIRST);
     const doctorLink = page.getByRole("link", { name: new RegExp(DOCTOR_FIRST) });
@@ -223,6 +237,7 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await navigate(page, doctorLink);
     await page.waitForURL(/\/patient\/doctors\/[0-9a-f-]{36}/);
     await expect(page.getByText("Available times")).toBeVisible();
+    await say(page, "The doctor's profile lists the available times.");
   });
 
   // ── 7. Guided matching ──────────────────────────────────────────────────
@@ -230,12 +245,14 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await navigate(page, page.locator("aside").getByRole("link", { name: "Guided match" }));
     await page.waitForURL((url) => url.pathname === "/patient/match");
     await expect(page.getByRole("heading", { name: "Guided match" })).toBeVisible();
+    await say(page, "Guided matching maps symptoms to the right specialty.");
 
     await typeInto(page, page.getByPlaceholder(/type in plain words/i), "tight chest and shortness of breath");
     await beat(page);
     await click(page, page.getByRole("button", { name: "Get suggestions" }));
     await expect(page.getByText(/Matched specialties:/).first()).toBeVisible();
     await expect(page.getByText(/Experience bonus:/).first()).toBeVisible();
+    await say(page, "The matcher suggests specialties and an experience bonus.");
   });
 
   // ── 8. Book & join a consultation ────────────────────────────────────────
@@ -246,6 +263,7 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await navigate(page, page.getByRole("link", { name: new RegExp(DOCTOR_FIRST) }));
     await page.waitForURL(/\/patient\/doctors\/[0-9a-f-]{36}/);
     await expect(page.getByText("Available times")).toBeVisible();
+    await say(page, "The patient picks an available slot and books a consultation.");
 
     await pickFirstBookableSlot(page);
     await typeInto(page, page.getByRole("dialog").getByPlaceholder("Briefly describe your concern"), "Chest tightness follow-up");
@@ -253,6 +271,7 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
 
     await page.waitForURL(/\/patient\/appointments/);
     await expect(page.getByText("Chest tightness follow-up").first()).toBeVisible();
+    await say(page, "The consultation is booked.");
 
     // Open the consultation workspace and join — the session moves
     // SCHEDULED → JOINED.
@@ -262,6 +281,7 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await expect(page.getByText("Scheduled", { exact: true })).toBeVisible();
     await click(page, page.getByRole("button", { name: "Join" }));
     await expect(page.getByText("Joined", { exact: true })).toBeVisible();
+    await say(page, "The patient joins the session, which moves to Joined.");
 
     // The "Appointment confirmed" notification is written asynchronously after
     // the booking response, and the dashboard's unread-notifications query is
@@ -272,6 +292,7 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await expect(page.getByText("Notifications")).toBeVisible();
     // Live bookings notify the patient with "Appointment confirmed".
     await expect(page.getByText("Appointment confirmed").first()).toBeVisible();
+    await say(page, "The patient receives a confirmation notification.");
 
     await signOut(page, PATIENT_DISPLAY);
   });
@@ -283,6 +304,7 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
     // The doctor's own unread notifications include the patient's booking.
     await expect(page.getByText("New appointment booked").first()).toBeVisible();
+    await say(page, "The doctor sees the new appointment and opens the session.");
 
     // Open the session and walk the state machine: JOINED → IN_PROGRESS → COMPLETED.
     await navigate(page, page.getByRole("link", { name: "Open session" }));
@@ -293,8 +315,10 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await click(page, page.getByRole("button", { name: "Join (re-open)" }));
     await click(page, page.getByRole("button", { name: "Start consultation" }));
     await expect(page.getByText("In progress", { exact: true })).toBeVisible();
+    await say(page, "The consultation is now in progress.");
 
     // Record the consultation note.
+    await say(page, "The doctor records the consultation note.");
     await typeInto(page, page.getByPlaceholder("Assessment"), "Stable angina, suspected.");
     await typeInto(page, page.getByPlaceholder("Plan"), "ECG and low-dose aspirin; review in two weeks.");
     await typeInto(page, page.getByPlaceholder("Summary"), "Demo consultation summary: stable angina workup.");
@@ -302,6 +326,7 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await expect(page.getByText("Note saved")).toBeVisible();
 
     // Issue a prescription.
+    await say(page, "And issues a prescription.");
     const prescriptionCard = page.locator("[data-slot='card']").filter({ hasText: "Issue prescription" });
     const rxInputs = prescriptionCard.locator("input");
     await typeInto(page, rxInputs.nth(0), "Nitroglycerin");
@@ -313,6 +338,7 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     // Complete the session.
     await click(page, page.getByRole("button", { name: "Complete consultation" }));
     await expect(page.getByText("Completed", { exact: true })).toBeVisible();
+    await say(page, "The session is completed.");
     await expect(page.getByText("Consultation note").first()).toBeVisible();
     await expect(page.getByText("Nitroglycerin").first()).toBeVisible();
 
@@ -326,12 +352,14 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await navigate(page, page.locator("aside").getByRole("link", { name: "Profile" }));
     await page.waitForURL((url) => url.pathname === "/doctor/profile");
     await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
+    await say(page, "The doctor reviews their profile and specializations.");
     await expect(page.getByText("Specializations")).toBeVisible();
     await expect(page.getByText("Cardiology").first()).toBeVisible();
 
     await navigate(page, page.locator("aside").getByRole("link", { name: "Patients" }));
     await page.waitForURL((url) => url.pathname === "/doctor/patients");
     await expect(page.getByRole("heading", { name: "Patients" })).toBeVisible();
+    await say(page, "And confirms the patient appears in their list.");
     await expect(page.getByText(PATIENT_DISPLAY)).toBeVisible();
 
     await signOut(page, DOCTOR_DISPLAY);
@@ -342,6 +370,7 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await signInFromLanding(page, PATIENT_EMAIL, "Password123", "/patient");
     await page.goto("/patient/records");
     await expect(page.getByRole("heading", { name: "Records" })).toBeVisible();
+    await say(page, "The patient reviews the completed record and prescription.");
     await expect(page.getByText("Demo consultation summary: stable angina workup.").first()).toBeVisible();
     await expect(page.getByText("Nitroglycerin").first()).toBeVisible();
 
@@ -351,6 +380,7 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
   // ── 11. Patient books & cancels a follow-up ─────────────────────────────
   await test.step("Patient books and cancels a follow-up", async () => {
     await signInFromLanding(page, PATIENT_EMAIL, "Password123", "/patient");
+    await say(page, "The patient books a follow-up appointment.");
 
     // Book a second consultation to demonstrate the cancel flow.
     await navigate(page, page.locator("aside").getByRole("link", { name: "Find a doctor" }));
@@ -365,6 +395,7 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await click(page, page.getByRole("dialog").getByRole("button", { name: "Confirm booking" }));
     await page.waitForURL(/\/patient\/appointments/);
     await expect(page.getByText("Follow-up blood pressure check").first()).toBeVisible();
+    await say(page, "Now the patient cancels the follow-up.");
 
     // Cancel the follow-up.
     const followUp = page
@@ -377,6 +408,7 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await click(page, page.getByRole("button", { name: "Cancel appointment" }));
     await expect(page.getByText("Appointment cancelled")).toBeVisible();
     await expect(page.getByText("Cancelled", { exact: true }).first()).toBeVisible();
+    await say(page, "The appointment is cancelled.");
 
     await signOut(page, PATIENT_DISPLAY);
   });
@@ -385,23 +417,27 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
   await test.step("Admin oversees the operation", async () => {
     await signInFromLanding(page, ADMIN.email, ADMIN.password, ADMIN.home);
     await expect(page.getByRole("heading", { name: "Admin dashboard" })).toBeVisible();
+    await say(page, "Finally, the administrator oversees the whole operation.");
     await expect(page.getByText("Total users")).toBeVisible();
     await expect(page.getByText("Audit entries")).toBeVisible();
 
     await navigate(page, page.locator("aside").getByRole("link", { name: "Appointments" }));
     await page.waitForURL((url) => url.pathname === "/admin/appointments");
     await expect(page.getByRole("heading", { name: "Appointments" })).toBeVisible();
+    await say(page, "The administrator reviews all appointments.");
     await expect(page.getByRole("table")).toBeVisible();
 
     await navigate(page, page.locator("aside").getByRole("link", { name: "Audit log" }));
     await page.waitForURL((url) => url.pathname === "/admin/audit");
     await expect(page.getByRole("heading", { name: "Audit log" })).toBeVisible();
+    await say(page, "And checks the audit log for the approval entry.");
     await expect(page.getByText("DOCTOR_APPROVED").first()).toBeVisible();
 
     // User management: find the demo patient, suspend, then reactivate.
     await navigate(page, page.locator("aside").getByRole("link", { name: "Users" }));
     await page.waitForURL((url) => url.pathname === "/admin/users");
     await expect(page.getByRole("heading", { name: "Users" })).toBeVisible();
+    await say(page, "The administrator suspends and reactivates a user.");
     await typeInto(page, page.getByPlaceholder("Search name or email"), PATIENT_EMAIL);
     const userRow = page.getByRole("row", { name: PATIENT_EMAIL });
     await expect(userRow).toBeVisible();

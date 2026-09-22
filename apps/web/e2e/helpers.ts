@@ -30,6 +30,21 @@ export async function beat(page: Page, ms = 1600): Promise<void> {
   if (DEMO_UI) await page.waitForTimeout(ms);
 }
 
+/** Speaks narration in demo mode; no-op otherwise. Waits until speech finishes. */
+export async function say(page: Page, text: string): Promise<void> {
+  if (!DEMO_UI) return;
+  await page.evaluate(
+    (t) =>
+      new Promise<void>((resolve) => {
+        const utterance = new SpeechSynthesisUtterance(t);
+        utterance.onend = () => resolve();
+        utterance.onerror = () => resolve(); // don't hang the test if no voice
+        speechSynthesis.speak(utterance);
+      }),
+    text,
+  );
+}
+
 /**
  * Scrolls the element into view. In demo mode it smooth-scrolls so the motion
  * is visible on screen; otherwise it jumps straight to the element (default).
