@@ -5,14 +5,14 @@ import { hasAppointmentConflict, validateBookingWindow } from './conflicts.js';
 const now = new Date('2026-09-21T00:00:00.000Z');
 
 describe('validateBookingWindow', () => {
-  it('rejects starts inside the lead-time window', () => {
-    const result = validateBookingWindow({ startsAt: new Date(now.getTime() + 30 * 60_000), now });
+  it('rejects a start in the past', () => {
+    const result = validateBookingWindow({ startsAt: new Date(now.getTime() - 60_000), now });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.code).toBe(ErrorCodes.BUSINESS_RULE_VIOLATION);
   });
 
-  it('accepts a slot at exactly the lead-time boundary', () => {
-    expect(validateBookingWindow({ startsAt: new Date(now.getTime() + 60 * 60_000), now }).ok).toBe(true);
+  it('accepts a slot in the future', () => {
+    expect(validateBookingWindow({ startsAt: new Date(now.getTime() + 30 * 60_000), now }).ok).toBe(true);
   });
 
   it('accepts a slot within the horizon', () => {

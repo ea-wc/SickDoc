@@ -7,10 +7,6 @@ import { DomainEventsService } from '../common/events/domain-events.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { transition } from './state-machine.js';
 
-const JOIN_WINDOW_BEFORE_MINUTES = 10;
-const JOIN_WINDOW_AFTER_MINUTES = 30;
-const MINUTE = 60_000;
-
 /** Consultation workspace and session state machine (docs/API_SPEC.md §8). */
 @Injectable()
 export class ConsultationsService {
@@ -36,11 +32,6 @@ export class ConsultationsService {
     }
 
     const now = new Date();
-    const joinableFrom = appointment.startsAt.getTime() - JOIN_WINDOW_BEFORE_MINUTES * MINUTE;
-    const joinableUntil = appointment.endsAt.getTime() + JOIN_WINDOW_AFTER_MINUTES * MINUTE;
-    if (now.getTime() < joinableFrom || now.getTime() > joinableUntil) {
-      throw new AppException(ErrorCodes.BUSINESS_RULE_VIOLATION, 'This consultation is outside the join window');
-    }
 
     const result = transition(appointment.session.status, 'join', {
       patientJoined: appointment.session.patientJoinedAt != null,
@@ -59,7 +50,7 @@ export class ConsultationsService {
         doctorJoinedAt: participation === 'doctor' ? appointment.session.doctorJoinedAt ?? now : appointment.session.doctorJoinedAt,
       },
     });
-    return { session: updated, joinableAt: new Date(joinableFrom).toISOString(), joinWindowEndsAt: new Date(joinableUntil).toISOString() };
+    return { session: updated };
   }
 
   async start(user: AuthenticatedUser, appointmentId: string): Promise<object> {
@@ -260,8 +251,6 @@ export class ConsultationsService {
         startedAt: appointment.session.startedAt?.toISOString() ?? null,
         endedAt: appointment.session.endedAt?.toISOString() ?? null,
         durationSeconds: appointment.session.durationSeconds ?? null,
-        joinableAt: new Date(appointment.startsAt.getTime() - JOIN_WINDOW_BEFORE_MINUTES * MINUTE).toISOString(),
-        joinWindowEndsAt: new Date(appointment.endsAt.getTime() + JOIN_WINDOW_AFTER_MINUTES * MINUTE).toISOString(),
       },
       patient: {
         id: appointment.patient.id,

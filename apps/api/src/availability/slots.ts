@@ -3,7 +3,7 @@
  *
  *   slots = expand(rules) − overlaps(exceptions)
  *                        − overlaps(active appointments)
- *                        − slots starting before now + leadTime
+ *                        − slots that have already started
  *
  * Slots are computed, never stored. This module is pure so it can be unit
  * tested without a database or a fixed system timezone.
@@ -38,17 +38,14 @@ export interface DeriveSlotsInput {
   to: string;
   timeZone: string;
   now: Date;
-  leadTimeMinutes: number;
 }
-
-const MINUTE = 60_000;
 
 function overlaps(aStart: number, aEnd: number, bStart: number, bEnd: number): boolean {
   return aStart < bEnd && bStart < aEnd;
 }
 
 export function deriveSlots(input: DeriveSlotsInput): DerivedDay[] {
-  const leadCutoff = input.now.getTime() + input.leadTimeMinutes * MINUTE;
+  const leadCutoff = input.now.getTime();
   const blockedRanges = [
     ...input.exceptions.map((e) => ({ start: e.startsAt.getTime(), end: e.endsAt.getTime() })),
     ...input.appointments.map((a) => ({ start: a.startsAt.getTime(), end: a.endsAt.getTime() })),

@@ -2,10 +2,8 @@
 import type { ErrorCode } from '@sickdoc/shared';
 import { ErrorCodes } from '@sickdoc/shared';
 
-export const LEAD_TIME_MINUTES = 60;
 export const BOOKING_HORIZON_DAYS = 90;
 
-const MINUTE = 60_000;
 const DAY = 24 * 3600_000;
 
 export function isOverlappingMs(aStart: number, aEnd: number, bStart: number, bEnd: number): boolean {
@@ -19,11 +17,11 @@ export interface BookingWindowInput {
 
 export type BookingWindowResult = { ok: true } | { ok: false; code: ErrorCode; message: string };
 
-/** Asserts the requested start is within [now + lead, now + horizon]. */
+/** Asserts the requested start is in the future and within the booking horizon. */
 export function validateBookingWindow(input: BookingWindowInput): BookingWindowResult {
   const start = input.startsAt.getTime();
-  if (start < input.now.getTime() + LEAD_TIME_MINUTES * MINUTE) {
-    return { ok: false, code: ErrorCodes.BUSINESS_RULE_VIOLATION, message: 'The requested time is inside the lead-time window' };
+  if (start < input.now.getTime()) {
+    return { ok: false, code: ErrorCodes.BUSINESS_RULE_VIOLATION, message: 'The requested time is in the past' };
   }
   if (start > input.now.getTime() + BOOKING_HORIZON_DAYS * DAY) {
     return { ok: false, code: ErrorCodes.BUSINESS_RULE_VIOLATION, message: 'The requested time is beyond the booking horizon' };

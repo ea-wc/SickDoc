@@ -233,7 +233,7 @@ export class DoctorsService {
       throw new AppException(ErrorCodes.NOT_FOUND, 'Doctor not found');
     }
 
-    const { days, timezone, slotMinutes, leadTimeMinutes } = await this.availability.derive(doctor.id, from, to);
+    const { days, timezone, slotMinutes } = await this.availability.derive(doctor.id, from, to);
     return {
       data: days.map((day) => ({
         date: day.date,
@@ -243,7 +243,7 @@ export class DoctorsService {
           available: slot.available,
         })),
       })),
-      meta: { timezone, slotMinutes, leadTimeMinutes },
+      meta: { timezone, slotMinutes },
     };
   }
 

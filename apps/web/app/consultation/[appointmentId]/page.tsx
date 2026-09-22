@@ -29,8 +29,6 @@ interface Workspace {
     startedAt: string | null;
     endedAt: string | null;
     durationSeconds: number | null;
-    joinableAt: string;
-    joinWindowEndsAt: string;
   };
   patient: { id: string; displayName: string; initials: string; avatarColor: string };
   doctor: { id: string; displayName: string; initials: string; avatarColor: string; primarySpecialization: string | null };

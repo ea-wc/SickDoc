@@ -8,7 +8,6 @@ import { CreateAvailabilityExceptionDto, ReplaceAvailabilityRulesDto } from './d
 import { deriveSlots, findSlot, SlotInstant, SlotRuleInput } from './slots.js';
 import { addDays, dateOnlyString, utcToLocalDateString, weekdayOf, utcToLocalMinuteOfDay } from './timezone.js';
 
-export const LEAD_TIME_MINUTES = 60;
 const DEFAULT_SLOT_MINUTES = 30;
 const ACTIVE_APPOINTMENT_STATUSES: AppointmentStatus[] = [
   AppointmentStatus.PENDING,
@@ -20,7 +19,6 @@ export interface DerivedAvailability {
   days: ReturnType<typeof deriveSlots>;
   timezone: string;
   slotMinutes: number;
-  leadTimeMinutes: number;
 }
 
 /** True when the given rules generate a slot that exactly covers [startsAt, endsAt]. */
@@ -188,9 +186,8 @@ export class AvailabilityService {
       to,
       timeZone: timezone,
       now: new Date(),
-      leadTimeMinutes: LEAD_TIME_MINUTES,
     });
-    return { days, timezone, slotMinutes: DEFAULT_SLOT_MINUTES, leadTimeMinutes: LEAD_TIME_MINUTES };
+    return { days, timezone, slotMinutes: DEFAULT_SLOT_MINUTES };
   }
 
   /** Earliest available slot within `withinDays`, or null. */

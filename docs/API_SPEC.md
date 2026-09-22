@@ -46,7 +46,7 @@ Every non-2xx response:
 | 403 | `FORBIDDEN`, `ACCOUNT_SUSPENDED`, `DOCTOR_NOT_APPROVED` |
 | 404 | `NOT_FOUND` |
 | 409 | `EMAIL_TAKEN`, `SLOT_UNAVAILABLE`, `PATIENT_DOUBLE_BOOKED`, `INVALID_STATE_TRANSITION`, `NOTE_ALREADY_EXISTS` |
-| 422 | `BUSINESS_RULE_VIOLATION` (e.g. cancelling inside the lead-time window) |
+| 422 | `BUSINESS_RULE_VIOLATION` |
 | 429 | `RATE_LIMITED` |
 | 500 | `INTERNAL_ERROR` |
 
@@ -279,7 +279,7 @@ why a doctor was suggested.
 
 `201` returns the appointment with its embedded session. Errors: `409 SLOT_UNAVAILABLE`,
 `409 PATIENT_DOUBLE_BOOKED`, `403 DOCTOR_NOT_APPROVED`,
-`422 BUSINESS_RULE_VIOLATION` (inside lead time, or beyond the 90-day booking horizon).
+`422 BUSINESS_RULE_VIOLATION` (in the past, or beyond the 90-day booking horizon).
 Creates notifications for both parties.
 
 ### `GET /api/appointments`
@@ -296,7 +296,7 @@ default `upcoming`), `page`, `pageSize`.
     "patient": { "id": "…", "displayName": "Ada Lovelace", "initials": "AL", "avatarColor": "#3B82F6" },
     "doctor":  { "id": "…", "displayName": "Dr. Mei Chen", "initials": "MC", "avatarColor": "#10B981",
                  "primarySpecialization": "Cardiology" },
-    "session": { "id": "…", "status": "SCHEDULED", "joinableAt": "2026-09-22T00:50:00.000Z" },
+    "session": { "id": "…", "status": "SCHEDULED" },
     "hasNote": false, "prescriptionCount": 0,
     "createdAt": "…"
   }],
@@ -333,9 +333,7 @@ timestamps, and — for the doctor — the patient's relevant history summary.
 
 ### `POST /api/consultations/:appointmentId/join`
 
-Marks the caller joined. `SCHEDULED → JOINED`. Joinable from 10 minutes before
-`startsAt` until 30 minutes after `endsAt`; outside that window,
-`422 BUSINESS_RULE_VIOLATION`.
+Marks the caller joined. `SCHEDULED → JOINED`.
 
 ### `POST /api/consultations/:appointmentId/start` *(doctor)*
 

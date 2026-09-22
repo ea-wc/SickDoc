@@ -38,7 +38,7 @@ export interface AppointmentCard {
   reason: string;
   patient: { id: string; displayName: string; initials: string; avatarColor: string };
   doctor: { id: string; displayName: string; initials: string; avatarColor: string; primarySpecialization: string | null };
-  session: { id: string; status: string; joinableAt: string } | null;
+  session: { id: string; status: string } | null;
   hasNote: boolean;
   prescriptionCount: number;
   createdAt: string;

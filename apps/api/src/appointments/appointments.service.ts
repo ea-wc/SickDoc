@@ -16,8 +16,6 @@ const ACTIVE_STATUSES: AppointmentStatus[] = [
   AppointmentStatus.RESCHEDULED,
 ];
 
-const JOIN_WINDOW_BEFORE_MINUTES = 10;
-
 const listInclude = {
   patient: { select: { id: true, firstName: true, lastName: true, avatarColor: true } },
   doctor: {
@@ -456,7 +454,6 @@ export class AppointmentsService {
         ? {
             id: row.session.id,
             status: row.session.status,
-            joinableAt: new Date(row.startsAt.getTime() - JOIN_WINDOW_BEFORE_MINUTES * 60_000).toISOString(),
           }
         : null,
       hasNote: row.note != null,
@@ -522,7 +519,6 @@ export class AppointmentsService {
         ? {
             id: row.session.id,
             status: row.session.status,
-            joinableAt: new Date(row.startsAt.getTime() - JOIN_WINDOW_BEFORE_MINUTES * 60_000).toISOString(),
             patientJoinedAt: row.session.patientJoinedAt?.toISOString() ?? null,
             doctorJoinedAt: row.session.doctorJoinedAt?.toISOString() ?? null,
             startedAt: row.session.startedAt?.toISOString() ?? null,

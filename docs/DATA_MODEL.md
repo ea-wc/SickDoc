@@ -151,7 +151,7 @@ A blocked window that subtracts from the rules — leave, a conference, a blocke
 `id`, `doctorProfileId`, `startsAt`, `endsAt`, `reason?`. Index `(doctorProfileId, startsAt)`.
 
 Concrete bookable slots are **derived at read time** from rules minus exceptions minus
-active appointments minus the lead-time cutoff. No slot table exists; see
+active appointments minus slots that have already started. No slot table exists; see
 [ARCHITECTURE.md](ARCHITECTURE.md) §6.1.
 
 ### Appointment

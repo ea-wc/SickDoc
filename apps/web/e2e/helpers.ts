@@ -54,6 +54,9 @@ export async function typeInto(page: Page, locator: Locator, text: string): Prom
     return;
   }
 
+  // Smooth-scroll the field into view so the pointer travel is visible.
+  await locator.evaluate((el) => el.scrollIntoView({ behavior: "smooth", block: "center" }));
+  await page.waitForTimeout(400);
   await locator.hover(); // move the mouse indicator to the input
   await page.waitForTimeout(200);
   await locator.click();
@@ -72,9 +75,22 @@ export async function click(page: Page, locator: Locator): Promise<void> {
     return;
   }
 
+  // Smooth-scroll the target into view so the pointer travel is visible.
+  await locator.evaluate((el) => el.scrollIntoView({ behavior: "smooth", block: "center" }));
+  await page.waitForTimeout(400);
   await locator.hover(); // move the mouse indicator to the element
   await page.waitForTimeout(200);
   await locator.click();
+}
+
+/**
+ * Clicks an element and pauses so a viewer can take in the resulting screen.
+ * In demo mode it clicks (with pointer motion) then waits 2 seconds; otherwise
+ * it just clicks.
+ */
+export async function navigate(page: Page, locator: Locator): Promise<void> {
+  await click(page, locator);
+  if (DEMO_UI) await page.waitForTimeout(2000);
 }
 
 export const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;

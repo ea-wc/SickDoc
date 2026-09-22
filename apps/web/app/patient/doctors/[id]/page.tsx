@@ -21,17 +21,11 @@ function toDateOnly(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
-function tomorrow(): Date {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return d;
-}
-
 export default function DoctorDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [date, setDate] = useState<Date>(tomorrow());
+  const [date, setDate] = useState<Date>(new Date());
   const [selectedSlot, setSelectedSlot] = useState<{ startsAt: string; endsAt: string } | null>(null);
   const [reason, setReason] = useState("");
   const [pending, setPending] = useState(false);
@@ -108,7 +102,7 @@ export default function DoctorDetailPage() {
                   mode="single"
                   selected={date}
                   onSelect={(d) => d && setDate(d)}
-                  disabled={{ before: tomorrow() }}
+                  disabled={{ before: new Date() }}
                   className="rounded-md border"
                 />
               </CardContent>

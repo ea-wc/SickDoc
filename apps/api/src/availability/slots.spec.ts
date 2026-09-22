@@ -18,7 +18,6 @@ describe('deriveSlots', () => {
       to: '2026-09-21',
       timeZone: MANILA,
       now: PAST,
-      leadTimeMinutes: 60,
     });
     expect(days).toHaveLength(1);
     const slots = days[0].slots;
@@ -37,7 +36,6 @@ describe('deriveSlots', () => {
       to: '2026-09-21',
       timeZone: MANILA,
       now: PAST,
-      leadTimeMinutes: 60,
     });
     expect(days[0].slots.filter((slot) => slot.available)).toHaveLength(13);
   });
@@ -51,13 +49,12 @@ describe('deriveSlots', () => {
       to: '2026-09-21',
       timeZone: MANILA,
       now: PAST,
-      leadTimeMinutes: 60,
     });
     expect(findSlot(days, new Date('2026-09-21T01:00:00.000Z'))?.available).toBe(false);
     expect(findSlot(days, new Date('2026-09-21T01:30:00.000Z'))?.available).toBe(true);
   });
 
-  it('blocks slots inside the lead-time window', () => {
+  it('blocks slots that have already started', () => {
     const days = deriveSlots({
       rules: [rule(1, 540, 1020)],
       exceptions: [],
@@ -65,8 +62,7 @@ describe('deriveSlots', () => {
       from: '2026-09-21',
       to: '2026-09-21',
       timeZone: MANILA,
-      now: new Date('2026-09-21T00:30:00.000Z'), // lead cutoff at 01:30Z
-      leadTimeMinutes: 60,
+      now: new Date('2026-09-21T01:05:00.000Z'),
     });
     expect(findSlot(days, new Date('2026-09-21T01:00:00.000Z'))?.available).toBe(false);
     expect(findSlot(days, new Date('2026-09-21T01:30:00.000Z'))?.available).toBe(true);
@@ -83,7 +79,6 @@ describe('deriveSlots', () => {
       to: '2026-09-22',
       timeZone: MANILA,
       now: PAST,
-      leadTimeMinutes: 60,
     });
     expect(days).toHaveLength(1);
     expect(days[0].date).toBe('2026-09-22');
@@ -98,7 +93,6 @@ describe('deriveSlots', () => {
       to: '2026-09-21',
       timeZone: MANILA,
       now: PAST,
-      leadTimeMinutes: 60,
     });
     expect(findBookableSlot(days, new Date('2026-09-21T01:00:00.000Z'))).toBeUndefined();
     expect(findBookableSlot(days, new Date('2026-09-21T01:30:00.000Z'))).toBeDefined();
