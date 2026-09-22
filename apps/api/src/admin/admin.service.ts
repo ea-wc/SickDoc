@@ -215,7 +215,17 @@ export class AdminService {
   async listDoctors(query: AdminDoctorsQueryDto) {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
-    const where: Prisma.DoctorProfileWhereInput = query.status ? { status: query.status } : {};
+    const where: Prisma.DoctorProfileWhereInput = {};
+    if (query.status) where.status = query.status;
+    if (query.q) {
+      const q = query.q.trim();
+      where.OR = [
+        { firstName: { contains: q, mode: "insensitive" } },
+        { lastName: { contains: q, mode: "insensitive" } },
+        { title: { contains: q, mode: "insensitive" } },
+        { user: { email: { contains: q, mode: "insensitive" } } },
+      ];
+    }
 
     const [rows, total] = await Promise.all([
       this.prisma.doctorProfile.findMany({

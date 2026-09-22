@@ -151,6 +151,12 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await click(page, page.getByRole("dialog").getByRole("button", { name: "Confirm" }));
     await expect(page.getByText(DOCTOR_EMAIL)).toHaveCount(0);
 
+    // Switch to the approved list and search for the newly approved doctor.
+    await click(page, page.getByRole("combobox"));
+    await click(page, page.getByRole("option", { name: "Approved" }));
+    await typeInto(page, page.getByPlaceholder("Search name or email"), DOCTOR_FIRST);
+    await expect(page.getByText(DOCTOR_EMAIL)).toBeVisible();
+
     await signOut(page, "Administrator");
   });
 

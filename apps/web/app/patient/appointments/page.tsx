@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api } from "@/lib/api-client";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, toDateOnly } from "@/lib/format";
 import type { AppointmentCard, SlotDay } from "@/lib/types";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
@@ -20,10 +20,6 @@ import { PageContainer } from "@/components/shared/page-container";
 import { InitialsAvatar } from "@/components/shared/initials-avatar";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { CalendarClock } from "lucide-react";
-
-function toDateOnly(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
 
 export default function AppointmentsPage() {
   const queryClient = useQueryClient();

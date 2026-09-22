@@ -65,6 +65,11 @@ export class AdminUsersQueryDto extends PaginationQueryDto {
 
 export class AdminDoctorsQueryDto extends PaginationQueryDto {
   @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  q?: string;
+
+  @IsOptional()
   @IsEnum(DoctorStatus)
   status?: DoctorStatus;
 }

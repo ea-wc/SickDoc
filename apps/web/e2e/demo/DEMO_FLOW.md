@@ -54,8 +54,10 @@ The demo tells one continuous story:
 7. Click **Approve**.
 8. Click **Confirm** in the dialog to submit the review.
 9. Verify the doctor is now **approved** — active and bookable.
-10. Sign out.
-11. Confirm you are back on the product page (`/`).
+10. Change the **status filter** to **Approved**.
+11. Search for `Doc <sha>` in the search field and confirm the doctor appears in the approved list.
+12. Sign out.
+13. Confirm you are back on the product page (`/`).
 
 ### 4. Patient browses the product website
 1. Confirm you are on the product page (`/`).

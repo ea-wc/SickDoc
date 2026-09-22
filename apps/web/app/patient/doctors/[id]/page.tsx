@@ -16,10 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ErrorState } from "@/components/shared/error-state";
 import { PageContainer } from "@/components/shared/page-container";
 import { InitialsAvatar } from "@/components/shared/initials-avatar";
-
-function toDateOnly(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
+import { toDateOnly } from "@/lib/format";
 
 export default function DoctorDetailPage() {
   const params = useParams<{ id: string }>();

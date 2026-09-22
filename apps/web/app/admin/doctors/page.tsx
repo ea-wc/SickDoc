@@ -34,14 +34,21 @@ interface AdminDoctor {
 
 export default function AdminDoctorsPage() {
   const queryClient = useQueryClient();
+  const [q, setQ] = useState("");
   const [status, setStatus] = useState("PENDING");
   const [target, setTarget] = useState<AdminDoctor | null>(null);
   const [decision, setDecision] = useState<"APPROVED" | "REJECTED">("APPROVED");
   const [reason, setReason] = useState("");
 
+  const params = new URLSearchParams();
+  if (q.trim()) params.set("q", q.trim());
+  params.set("status", status);
+  params.set("page", "1");
+  params.set("pageSize", "50");
+
   const doctors = useQuery({
-    queryKey: ["admin", "doctors", status],
-    queryFn: () => api<{ data: AdminDoctor[]; meta: PaginationMeta }>(`/admin/doctors?status=${status}&page=1&pageSize=50`),
+    queryKey: ["admin", "doctors", params.toString()],
+    queryFn: () => api<{ data: AdminDoctor[]; meta: PaginationMeta }>(`/admin/doctors?${params.toString()}`),
   });
 
   async function review() {
@@ -59,19 +66,27 @@ export default function AdminDoctorsPage() {
 
   return (
     <PageContainer className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Doctor reviews</h1>
           <p className="text-sm text-muted-foreground">Approve or reject submitted profiles.</p>
         </div>
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="PENDING">Pending</SelectItem>
-            <SelectItem value="APPROVED">Approved</SelectItem>
-            <SelectItem value="REJECTED">Rejected</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-3">
+          <Input
+            placeholder="Search name or email"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="max-w-xs"
+          />
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="APPROVED">Approved</SelectItem>
+              <SelectItem value="REJECTED">Rejected</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {doctors.isLoading ? (
@@ -79,7 +94,7 @@ export default function AdminDoctorsPage() {
       ) : doctors.isError ? (
         <ErrorState message={(doctors.error as Error).message} onRetry={() => void doctors.refetch()} />
       ) : doctors.data?.data.length === 0 ? (
-        <EmptyState icon={Stethoscope} title="No doctors found" description="Try adjusting the status filter." />
+        <EmptyState icon={Stethoscope} title="No doctors found" description="Try a different search or status filter." />
       ) : (
         <div className="space-y-4">
           {doctors.data?.data.map((doctor) => (

@@ -478,7 +478,10 @@ Account, profile, and a summary of appointment activity.
 `SUSPENDED` and `DEACTIVATED`. Revokes the user's refresh tokens, notifies them, and
 audits the action. An admin cannot change their own status (`422`).
 
-### `GET /api/admin/doctors?status=PENDING`
+### `GET /api/admin/doctors`
+
+Query: `q` (search by doctor name or email), `status` (`PENDING`/`APPROVED`/`REJECTED`), `page`, `pageSize`.
+
 ### `PATCH /api/admin/doctors/:id/review`
 
 `{ "decision": "APPROVED" }` or `{ "decision": "REJECTED", "reason": "License unverifiable" }`.
