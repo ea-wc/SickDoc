@@ -15,6 +15,7 @@
     "test": "pnpm -r --if-present test",
     "test:e2e": "pnpm build && pnpm --filter @sickdoc/web test:e2e",
     "test:e2e:demo": "pnpm build && pnpm --filter @sickdoc/web test:e2e:demo",
+    "test:e2e:demo-uat": "pnpm --filter @sickdoc/web test:e2e:demo-uat",
     "db:migrate": "pnpm --filter @sickdoc/api prisma:migrate",
     "db:seed": "pnpm --filter @sickdoc/api db:seed"
   }

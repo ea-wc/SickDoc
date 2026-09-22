@@ -11,7 +11,8 @@
     "pretest:e2e": "node scripts/check-db.mjs",
     "pretest:e2e:demo": "node scripts/check-db.mjs",
     "test:e2e": "playwright test --project=chromium",
-    "test:e2e:demo": "DEMO_UI=true playwright test --project=demo"
+    "test:e2e:demo": "DEMO_UI=true playwright test --project=demo",
+    "test:e2e:demo-uat": "UAT_BASE_URL=${UAT_BASE_URL:-https://sickdoc.fly.dev} DEMO_UI=true playwright test --project=demo"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

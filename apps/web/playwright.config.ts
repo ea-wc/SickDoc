@@ -9,10 +9,16 @@ import { defineConfig, devices } from "@playwright/test";
  *
  * `globalSetup` applies migrations and re-seeds, then Playwright starts the
  * compiled API and the production web server before running the specs.
+ *
+ * With UAT_BASE_URL set (`pnpm test:e2e:demo-uat`), the local migrate/seed and
+ * web servers are skipped and the specs run against the already-deployed app.
  */
 const PORT = 3000;
 const API_PORT = 3001;
 const DEMO_UI = process.env.DEMO_UI === "true";
+// UAT mode: target an already-deployed app instead of booting local servers.
+const UAT_BASE_URL = process.env.UAT_BASE_URL;
+const isUat = Boolean(UAT_BASE_URL);
 
 export default defineConfig({
   testDir: "./e2e",
@@ -23,31 +29,33 @@ export default defineConfig({
   timeout: 45_000,
   expect: { timeout: 10_000 },
   use: {
-    baseURL: `http://localhost:${PORT}`,
+    baseURL: UAT_BASE_URL ?? `http://localhost:${PORT}`,
     // Show the browser when running the UI demo (`test:e2e:demo`).
     headless: !DEMO_UI,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
-  globalSetup: "./e2e/global-setup.ts",
-  webServer: [
-    {
-      command: "node dist/main.js",
-      cwd: "../api",
-      url: `http://localhost:${API_PORT}/api/health`,
-      // Always start the freshly built API — reusing an already-running server
-      // (e.g. the Docker stack) silently runs tests against stale code.
-      reuseExistingServer: false,
-      timeout: 60_000,
-    },
-    {
-      command: `pnpm start -p ${PORT}`,
-      cwd: ".",
-      url: `http://localhost:${PORT}`,
-      reuseExistingServer: false,
-      timeout: 120_000,
-    },
-  ],
+  globalSetup: isUat ? undefined : "./e2e/global-setup.ts",
+  webServer: isUat
+    ? []
+    : [
+        {
+          command: "node dist/main.js",
+          cwd: "../api",
+          url: `http://localhost:${API_PORT}/api/health`,
+          // Always start the freshly built API — reusing an already-running server
+          // (e.g. the Docker stack) silently runs tests against stale code.
+          reuseExistingServer: false,
+          timeout: 60_000,
+        },
+        {
+          command: `pnpm start -p ${PORT}`,
+          cwd: ".",
+          url: `http://localhost:${PORT}`,
+          reuseExistingServer: false,
+          timeout: 120_000,
+        },
+      ],
   projects: [
     {
       name: "chromium",
