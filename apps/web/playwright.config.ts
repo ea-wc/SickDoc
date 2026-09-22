@@ -12,6 +12,7 @@ import { defineConfig, devices } from "@playwright/test";
  */
 const PORT = 3000;
 const API_PORT = 3001;
+const DEMO_UI = process.env.DEMO_UI === "true";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -23,6 +24,8 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   use: {
     baseURL: `http://localhost:${PORT}`,
+    // Show the browser when running the UI demo (`test:e2e:demo`).
+    headless: !DEMO_UI,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
@@ -43,5 +46,17 @@ export default defineConfig({
       timeout: 120_000,
     },
   ],
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    {
+      name: "chromium",
+      // The demo spec is a slow, headed tour — keep it out of the regular suite.
+      testIgnore: /demo/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "demo",
+      testMatch: /demo/,
+      use: { ...devices["Desktop Chrome"], actionTimeout: 30_000 },
+    },
+  ],
 });

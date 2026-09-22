@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { ADMIN, PATIENT, signIn } from "./helpers";
+import { ADMIN, PATIENT, signIn } from "../helpers";
 
 // Admin module — INITIAL_DOC.md §5 "Admin module".
 

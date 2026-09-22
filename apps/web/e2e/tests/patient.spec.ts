@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { MONTHS, PATIENT, WEEKDAYS, ordinal, signIn } from "./helpers";
+import { MONTHS, PATIENT, WEEKDAYS, ordinal, signIn } from "../helpers";
 
 // Patient module — INITIAL_DOC.md §5 "Patient module".
 

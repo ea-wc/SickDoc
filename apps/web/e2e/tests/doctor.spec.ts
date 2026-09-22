@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { DOCTOR, signIn } from "./helpers";
+import { DOCTOR, signIn } from "../helpers";
 
 // Doctor module — INITIAL_DOC.md §5 "Doctor module".
 
@@ -16,6 +16,7 @@ test.describe("Account and profile", () => {
 test.describe("Schedule management", () => {
   test("manages weekly availability rules and blocked times", async ({ page }) => {
     await signIn(page, DOCTOR);
+    await page.goto("/doctor/schedule");
     await expect(page.getByRole("heading", { name: "Schedule" })).toBeVisible();
     await expect(page.getByText("Weekly hours")).toBeVisible();
     await expect(page.getByText("Blocked times")).toBeVisible();

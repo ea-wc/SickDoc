@@ -21,7 +21,8 @@ const NAV: Record<"patient" | "doctor" | "admin", { badge: string; items: NavIte
   doctor: {
     badge: "Doctor",
     items: [
-      { title: "Schedule", href: "/doctor", icon: CalendarCheck },
+      { title: "Dashboard", href: "/doctor", icon: LayoutDashboard },
+      { title: "Schedule", href: "/doctor/schedule", icon: CalendarCheck },
       { title: "Appointments", href: "/doctor/appointments", icon: CalendarClock },
       { title: "Patients", href: "/doctor/patients", icon: Users },
       { title: "Profile", href: "/doctor/profile", icon: FileText },
@@ -44,9 +45,12 @@ export function RoleShell({ role, children }: { role: "patient" | "doctor" | "ad
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
   const config = NAV[role];
+  const signedOutRef = React.useRef(false);
 
   React.useEffect(() => {
-    if (!loading && !user) {
+    // After an explicit sign-out the user is sent to the product page, not the
+    // sign-in screen.
+    if (!loading && !user && !signedOutRef.current) {
       router.replace("/sign-in");
     }
   }, [loading, user, router]);
@@ -74,6 +78,7 @@ export function RoleShell({ role, children }: { role: "patient" | "doctor" | "ad
       badge={config.badge}
       user={{ displayName: user.displayName, avatarColor: user.avatarColor }}
       onSignOut={() => {
+        signedOutRef.current = true;
         void signOut().then(() => router.replace("/"));
       }}
     >
