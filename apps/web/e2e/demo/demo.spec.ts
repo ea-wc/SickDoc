@@ -46,7 +46,7 @@ async function signOut(page: Page, displayName: string): Promise<void> {
 }
 
 /** Iterate future weekdays until a bookable slot appears. */
-async function pickFirstBookableSlot(page: Page): Promise<void> {
+async function pickBookableSlot(page: Page, position: "first" | "last" = "first"): Promise<void> {
   const today = new Date();
   for (let offset = 1; offset <= 21; offset++) {
     const candidate = new Date(today);
@@ -68,7 +68,7 @@ async function pickFirstBookableSlot(page: Page): Promise<void> {
 
     const slots = page.locator("main button:not([disabled])").filter({ hasText: /AM|PM/ });
     if ((await slots.count()) > 0) {
-      await click(page, slots.first());
+      await click(page, position === "last" ? slots.last() : slots.first());
       await expect(page.getByRole("dialog")).toBeVisible();
       return;
     }
@@ -255,7 +255,42 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await say(page, "The matcher suggests specialties and an experience bonus.");
   });
 
-  // ── 8. Book & join a consultation ────────────────────────────────────────
+  // ── 8. Patient books & cancels a booking ────────────────────────────────
+  await test.step("Patient books and cancels a booking", async () => {
+    await say(page, "The patient books an appointment, then cancels it.");
+
+    // Book an appointment to demonstrate the cancel flow.
+    await navigate(page, page.locator("aside").getByRole("link", { name: "Find a doctor" }));
+    await page.waitForURL((url) => url.pathname === "/patient/doctors");
+    await typeInto(page, page.getByPlaceholder("Name or specialty"), DOCTOR_FIRST);
+    await navigate(page, page.getByRole("link", { name: new RegExp(DOCTOR_FIRST) }));
+    await page.waitForURL(/\/patient\/doctors\/[0-9a-f-]{36}/);
+    await expect(page.getByText("Available times")).toBeVisible();
+
+    // Book the latest slot for the cancel demo so the real booking (next step,
+    // first slot) is strictly earlier — keeping it the doctor's "next appointment".
+    await pickBookableSlot(page, "last");
+    await typeInto(page, page.getByRole("dialog").getByPlaceholder("Briefly describe your concern"), "Blood pressure check");
+    await click(page, page.getByRole("dialog").getByRole("button", { name: "Confirm booking" }));
+    await page.waitForURL(/\/patient\/appointments/);
+    await expect(page.getByText("Blood pressure check").first()).toBeVisible();
+    await say(page, "Now the patient cancels the booking.");
+
+    // Cancel the booking.
+    const cancelledBooking = page
+      .locator("div")
+      .filter({ has: page.getByText("Blood pressure check") })
+      .filter({ has: page.getByRole("button", { name: "Cancel" }) })
+      .last();
+    await click(page, cancelledBooking.getByRole("button", { name: "Cancel" }));
+    await expect(page.getByText("Cancel this appointment?")).toBeVisible();
+    await click(page, page.getByRole("button", { name: "Cancel appointment" }));
+    await expect(page.getByText("Appointment cancelled")).toBeVisible();
+    await expect(page.getByText("Cancelled", { exact: true }).first()).toBeVisible();
+    await say(page, "The appointment is cancelled.");
+  });
+
+  // ── 9. Book & join a consultation ────────────────────────────────────────
   await test.step("Patient books and joins a consultation", async () => {
     await navigate(page, page.locator("aside").getByRole("link", { name: "Find a doctor" }));
     await page.waitForURL((url) => url.pathname === "/patient/doctors");
@@ -265,17 +300,24 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await expect(page.getByText("Available times")).toBeVisible();
     await say(page, "The patient picks an available slot and books a consultation.");
 
-    await pickFirstBookableSlot(page);
-    await typeInto(page, page.getByRole("dialog").getByPlaceholder("Briefly describe your concern"), "Chest tightness follow-up");
+    await pickBookableSlot(page, "first");
+    await typeInto(page, page.getByRole("dialog").getByPlaceholder("Briefly describe your concern"), "Chest tightness");
     await click(page, page.getByRole("dialog").getByRole("button", { name: "Confirm booking" }));
 
     await page.waitForURL(/\/patient\/appointments/);
-    await expect(page.getByText("Chest tightness follow-up").first()).toBeVisible();
+    await expect(page.getByText("Chest tightness").first()).toBeVisible();
     await say(page, "The consultation is booked.");
 
+    // The cancelled booking from the previous step is still listed, so target
+    // the "Join" link on the active (Chest tightness) appointment card.
+    const activeAppointment = page
+      .locator("div")
+      .filter({ has: page.getByText("Chest tightness") })
+      .filter({ has: page.getByRole("link", { name: "Join" }) })
+      .last();
     // Open the consultation workspace and join — the session moves
     // SCHEDULED → JOINED.
-    await navigate(page, page.getByRole("link", { name: "Join" }));
+    await navigate(page, activeAppointment.getByRole("link", { name: "Join" }));
     await page.waitForURL(/\/consultation\/[0-9a-f-]{36}/);
     await expect(page.getByRole("heading", { name: "Consultation" })).toBeVisible();
     await expect(page.getByText("Scheduled", { exact: true })).toBeVisible();
@@ -297,7 +339,7 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await signOut(page, PATIENT_DISPLAY);
   });
 
-  // ── 9. Doctor runs the consultation & reviews their practice ────────────
+  // ── 10. Doctor runs the consultation & reviews their practice ───────────
   await test.step("Doctor runs the consultation and reviews their practice", async () => {
     await signInFromLanding(page, DOCTOR_EMAIL, "Password123", "/doctor");
     await page.goto("/doctor");
@@ -365,7 +407,7 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await signOut(page, DOCTOR_DISPLAY);
   });
 
-  // ── 10. Patient reviews the medical record ──────────────────────────────
+  // ── 11. Patient reviews the medical record ──────────────────────────────
   await test.step("Patient reviews the medical record", async () => {
     await signInFromLanding(page, PATIENT_EMAIL, "Password123", "/patient");
     await page.goto("/patient/records");
@@ -373,42 +415,6 @@ test("full journey: doctor registers, admin approves, patient books, everyone fo
     await say(page, "The patient reviews the completed record and prescription.");
     await expect(page.getByText("Demo consultation summary: stable angina workup.").first()).toBeVisible();
     await expect(page.getByText("Nitroglycerin").first()).toBeVisible();
-
-    await signOut(page, PATIENT_DISPLAY);
-  });
-
-  // ── 11. Patient books & cancels a follow-up ─────────────────────────────
-  await test.step("Patient books and cancels a follow-up", async () => {
-    await signInFromLanding(page, PATIENT_EMAIL, "Password123", "/patient");
-    await say(page, "The patient books a follow-up appointment.");
-
-    // Book a second consultation to demonstrate the cancel flow.
-    await navigate(page, page.locator("aside").getByRole("link", { name: "Find a doctor" }));
-    await page.waitForURL((url) => url.pathname === "/patient/doctors");
-    await typeInto(page, page.getByPlaceholder("Name or specialty"), DOCTOR_FIRST);
-    await navigate(page, page.getByRole("link", { name: new RegExp(DOCTOR_FIRST) }));
-    await page.waitForURL(/\/patient\/doctors\/[0-9a-f-]{36}/);
-    await expect(page.getByText("Available times")).toBeVisible();
-
-    await pickFirstBookableSlot(page);
-    await typeInto(page, page.getByRole("dialog").getByPlaceholder("Briefly describe your concern"), "Follow-up blood pressure check");
-    await click(page, page.getByRole("dialog").getByRole("button", { name: "Confirm booking" }));
-    await page.waitForURL(/\/patient\/appointments/);
-    await expect(page.getByText("Follow-up blood pressure check").first()).toBeVisible();
-    await say(page, "Now the patient cancels the follow-up.");
-
-    // Cancel the follow-up.
-    const followUp = page
-      .locator("div")
-      .filter({ has: page.getByText("Follow-up blood pressure check") })
-      .filter({ has: page.getByRole("button", { name: "Cancel" }) })
-      .last();
-    await click(page, followUp.getByRole("button", { name: "Cancel" }));
-    await expect(page.getByText("Cancel this appointment?")).toBeVisible();
-    await click(page, page.getByRole("button", { name: "Cancel appointment" }));
-    await expect(page.getByText("Appointment cancelled")).toBeVisible();
-    await expect(page.getByText("Cancelled", { exact: true }).first()).toBeVisible();
-    await say(page, "The appointment is cancelled.");
 
     await signOut(page, PATIENT_DISPLAY);
   });

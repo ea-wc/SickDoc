@@ -26,7 +26,7 @@ Generate a short unique suffix `<sha>` for this run (e.g. `git rev-parse --short
 
 The demo tells one continuous story:
 
-**Doctor registers → doctor sets their Monday–Friday schedule → admin approves → patient browses the product site → patient registers → patient finds & matches a doctor → patient books & joins → doctor runs the consultation & records outcomes → patient reviews their medical record → patient books & cancels a follow-up → admin oversees everything (including user management).**
+**Doctor registers → doctor sets their Monday–Friday schedule → admin approves → patient browses the product site → patient registers → patient finds & matches a doctor → patient books & cancels a booking → patient books & joins → doctor runs the consultation & records outcomes → patient reviews their medical record → admin oversees everything (including user management).**
 
 ### 1. Doctor registration
 1. Open the product page at `/`.
@@ -92,18 +92,26 @@ The demo tells one continuous story:
 3. Click **Get suggestions**.
 4. Confirm the app maps symptoms to ranked specialties with a rationale and experience bonus.
 
-### 8. Book & join a consultation
-1. Click **Find a doctor** in the sidebar navigation to open `/patient/doctors`.
-2. Search for `Doc <sha>` and open the newly registered doctor.
-3. Pick a future weekday and an available time slot.
-4. Enter a brief reason and click **Confirm booking**.
-5. Confirm the appointment appears under `/patient/appointments`.
-6. Click **Join** to open the consultation workspace (`/consultation/<id>`) and click **Join** — the session moves to **Joined**.
-7. Open the patient dashboard (`/patient`) — confirm the **Appointment confirmed** notification.
-8. Sign out.
-9. Confirm you are back on the product page (`/`).
+### 8. Patient books & cancels a booking
+1. Continue as the signed-in patient.
+2. Click **Find a doctor** in the sidebar navigation to open `/patient/doctors`.
+3. Search for `Doc <sha>` and open the newly registered doctor.
+4. Pick a future weekday and an available time slot, enter a brief reason (e.g. "Blood pressure check"), and click **Confirm booking**.
+5. On `/patient/appointments`, click **Cancel** and confirm **Cancel appointment** — the appointment is **Cancelled**.
 
-### 9. Doctor runs the consultation & reviews their practice
+### 9. Book & join a consultation
+1. Continue as the signed-in patient.
+2. Click **Find a doctor** in the sidebar navigation to open `/patient/doctors`.
+3. Search for `Doc <sha>` and open the newly registered doctor.
+4. Pick a future weekday and an available time slot.
+5. Enter a brief reason (e.g. "Chest tightness") and click **Confirm booking**.
+6. Confirm the appointment appears under `/patient/appointments`.
+7. Click **Join** to open the consultation workspace (`/consultation/<id>`) and click **Join** — the session moves to **Joined**.
+8. Open the patient dashboard (`/patient`) — confirm the **Appointment confirmed** notification.
+9. Sign out.
+10. Confirm you are back on the product page (`/`).
+
+### 10. Doctor runs the consultation & reviews their practice
 1. Confirm you are back on the product page (`/`).
 2. Click **Sign in** to open the sign-in page (`/sign-in`).
 3. Sign in as the newly registered doctor (`demo.doctor.<sha>@gmail.com`).
@@ -118,20 +126,12 @@ The demo tells one continuous story:
 12. Sign out.
 13. Confirm you are back on the product page (`/`).
 
-### 10. Patient reviews the medical record
+### 11. Patient reviews the medical record
 1. Confirm you are back on the product page (`/`).
 2. Click **Sign in** and sign in as the newly registered patient (`demo.patient.<sha>@gmail.com`).
 3. Open `/patient/records` — confirm the consultation note summary and the **Nitroglycerin** prescription.
 4. Sign out.
 5. Confirm you are back on the product page (`/`).
-
-### 11. Patient books & cancels a follow-up
-1. Confirm you are back on the product page (`/`).
-2. Click **Sign in** and sign in as the newly registered patient (`demo.patient.<sha>@gmail.com`).
-3. Click **Find a doctor** and book a second consultation (reason "Follow-up blood pressure check").
-4. On `/patient/appointments`, click **Cancel** and confirm **Cancel appointment** — the appointment is **Cancelled**.
-5. Sign out.
-6. Confirm you are back on the product page (`/`).
 
 ### 12. Admin oversight
 1. Confirm you are back on the product page (`/`).
@@ -146,7 +146,7 @@ The demo tells one continuous story:
 
 ## Test coverage
 
-The full end-to-end demo is `demo.spec.ts` in this folder — a single, continuous journey through the 11 steps above, run with `pnpm test:e2e:demo`. It walks the entire core journey, including the consultation session (`SCHEDULED → JOINED → IN_PROGRESS → COMPLETED`), note & prescription recording, and the patient's medical record.
+The full end-to-end demo is `demo.spec.ts` in this folder — a single, continuous journey through the 12 steps above, run with `pnpm test:e2e:demo`. It walks the entire core journey, including the consultation session (`SCHEDULED → JOINED → IN_PROGRESS → COMPLETED`), note & prescription recording, and the patient's medical record.
 
 The per-role specs in `e2e/tests/` (`admin.spec.ts`, `doctor.spec.ts`, `patient.spec.ts`, `product-website.spec.ts`) cover the same screens in isolation for `pnpm test:e2e`.
 
@@ -159,8 +159,8 @@ Checklist against `INITIAL_DOC.md` §2 (core user journey) and §5 (module requi
 ### Covered
 
 - **Product website** — landing value prop + "How it works" + fictional-prototype disclaimer (step 4); CTAs for patient/doctor registration and sign-in (steps 1, 3, 5); Terms & Privacy pages (step 4).
-- **Patient** — register + profile (name, DOB, weight, height, phone, medical history) (step 5); doctor discovery/search (step 6); guided matching (step 7); book & join a consultation (step 8); booking notification (step 8); consultation records — notes & prescriptions (step 10); cancel a booking (step 11).
-- **Doctor** — register + profile + specialization (step 1); schedule management (steps 2, 9); patient records (step 9); booking notification (step 9); consultation session (join → start → complete) + note & prescription (step 9).
+- **Patient** — register + profile (name, DOB, weight, height, phone, medical history) (step 5); doctor discovery/search (step 6); guided matching (step 7); book & cancel a booking (step 8); book & join a consultation (step 9); booking notification (step 9); consultation records — notes & prescriptions (step 11).
+- **Doctor** — register + profile + specialization (step 1); schedule management (steps 2, 10); patient records (step 10); booking notification (step 10); consultation session (join → start → complete) + note & prescription (step 10).
 - **Admin** — pre-provisioned sign-in (steps 3, 12); doctor profile review (step 3); appointment oversight (step 12); operational dashboard (step 12); audit log (step 12); user management — suspend/reactivate (step 12).
 
 ### Missing
@@ -169,5 +169,5 @@ None — the full core journey and every §5 module requirement are now demonstr
 
 ### Partially covered
 
-- **Notifications** — patient "Appointment confirmed" (step 8) and doctor "New appointment booked" (step 9) are asserted; cancellation and schedule-change notices are not shown.
-- **Doctor patient records** — only the patient's name is asserted (step 9); the note/prescription outcome is verified from the patient side (step 10).
+- **Notifications** — patient "Appointment confirmed" (step 9) and doctor "New appointment booked" (step 10) are asserted; cancellation and schedule-change notices are not shown.
+- **Doctor patient records** — only the patient's name is asserted (step 10); the note/prescription outcome is verified from the patient side (step 11).
