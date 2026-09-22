@@ -19,6 +19,15 @@ describe('matchFreeText', () => {
   it('returns no ids for unrelated text', () => {
     expect(matchFreeText('hello world', symptoms)).toEqual([]);
   });
+
+  it('returns no ids for text with no significant words', () => {
+    expect(matchFreeText('a b c', symptoms)).toEqual([]);
+  });
+
+  it('tolerates symptoms without synonyms', () => {
+    const bare = [{ id: 's1', label: 'Chest pain', slug: 'chest-pain', synonyms: undefined as unknown as string[] }];
+    expect(matchFreeText('chest', bare)).toEqual(['s1']);
+  });
 });
 
 describe('scoreDoctor', () => {
@@ -59,6 +68,30 @@ describe('scoreDoctor', () => {
     });
     expect(output.availabilityBonus).toBe(0);
   });
+
+  it('gives no availability bonus when the next slot is in the past', () => {
+    const output = scoreDoctor({
+      yearsOfExperience: 5,
+      nextAvailableAt: new Date('2026-09-20T00:00:00.000Z'), // before `now`
+      specializations: [{ name: 'Cardiology', weight: 4 }],
+      now,
+    });
+    expect(output.availabilityBonus).toBe(0);
+  });
+
+  it('filters out zero-weight specializations', () => {
+    const output = scoreDoctor({
+      yearsOfExperience: 0,
+      nextAvailableAt: null,
+      specializations: [
+        { name: 'Cardiology', weight: 4 },
+        { name: 'Dermatology', weight: 0 },
+      ],
+      now,
+    });
+    expect(output.specializations).toEqual([{ name: 'Cardiology', weight: 4 }]);
+    expect(output.score).toBeCloseTo(4, 2);
+  });
 });
 
 describe('rankByScore', () => {
@@ -81,5 +114,40 @@ describe('rankByScore', () => {
       (item) => item.nextAvailableAt?.getTime() ?? null,
     );
     expect(ranked.map((r) => r.item.id)).toEqual(['c', 'a', 'b']);
+  });
+
+  it('breaks score and slot ties by id ascending', () => {
+    const now = new Date('2026-09-21T00:00:00.000Z');
+    const slot = new Date('2026-09-21T10:00:00.000Z');
+    const items = [
+      { id: 'b', nextAvailableAt: slot, specializations: [{ name: 'A', weight: 5 }] },
+      { id: 'a', nextAvailableAt: slot, specializations: [{ name: 'A', weight: 5 }] },
+    ];
+    const ranked = rankByScore(
+      items,
+      (item) => scoreDoctor({ yearsOfExperience: 0, nextAvailableAt: item.nextAvailableAt, specializations: item.specializations, now }),
+      (item) => item.nextAvailableAt?.getTime() ?? null,
+    );
+    expect(ranked.map((r) => r.item.id)).toEqual(['a', 'b']);
+  });
+
+  it('places an item with no slot after one with a slot on equal score', () => {
+    const fixed = () => ({ score: 5, specializations: [] as { name: string; weight: number }[], availabilityBonus: 0, experienceBonus: 0 });
+    const ranked = rankByScore(
+      [{ id: 'no-slot' }, { id: 'has-slot' }],
+      fixed,
+      (item) => (item.id === 'no-slot' ? null : 1000),
+    );
+    expect(ranked.map((r) => r.item.id)).toEqual(['has-slot', 'no-slot']);
+  });
+
+  it('places an item with no slot after one with a slot regardless of order', () => {
+    const fixed = () => ({ score: 5, specializations: [] as { name: string; weight: number }[], availabilityBonus: 0, experienceBonus: 0 });
+    const ranked = rankByScore(
+      [{ id: 'has-slot' }, { id: 'no-slot' }],
+      fixed,
+      (item) => (item.id === 'no-slot' ? null : 1000),
+    );
+    expect(ranked.map((r) => r.item.id)).toEqual(['has-slot', 'no-slot']);
   });
 });

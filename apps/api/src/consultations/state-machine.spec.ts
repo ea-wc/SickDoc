@@ -54,4 +54,16 @@ describe('consultation session state machine', () => {
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.code).toBe('INVALID_STATE_TRANSITION');
   });
+
+  it('rejects join from a terminal state', () => {
+    const result = transition(SessionStatus.COMPLETED, 'join', { patientJoined: false, now, endsAt: endedAt });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.code).toBe('INVALID_STATE_TRANSITION');
+  });
+
+  it('rejects no-show from a non-scheduled state', () => {
+    const result = transition(SessionStatus.JOINED, 'no-show', { patientJoined: false, now, endsAt: endedAt });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.code).toBe('INVALID_STATE_TRANSITION');
+  });
 });
