@@ -1,0 +1,69 @@
+# syntax=docker/dockerfile:1
+
+# Combined single-container image: Postgres + NestJS API + Next.js web.
+# Used by `fly.toml` so `fly deploy` ships the whole stack as one Fly app.
+
+# ---- base: pnpm via corepack + OpenSSL (Prisma engine runtime dep) ----
+FROM node:22-alpine AS base
+RUN apk add --no-cache openssl
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable && corepack prepare pnpm@12.4.2 --activate
+
+# ---- deps: install the whole workspace, lockfile-faithful ----
+FROM base AS deps
+WORKDIR /repo
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
+COPY packages/shared/package.json packages/shared/
+RUN pnpm install --frozen-lockfile
+
+# ---- build-api: compile shared + api, generate Prisma client, self-deploy ----
+FROM deps AS build-api
+WORKDIR /repo
+COPY packages/shared packages/shared
+COPY apps/api apps/api
+RUN pnpm --filter @sickdoc/shared build
+RUN pnpm --filter @sickdoc/api prisma:generate
+RUN pnpm --filter @sickdoc/api build
+RUN pnpm --filter @sickdoc/api deploy --prod /app/api
+
+# ---- build-web: compile shared, then the Next.js standalone server ----
+FROM deps AS build-web
+WORKDIR /repo
+COPY packages/shared packages/shared
+COPY apps/web apps/web
+RUN pnpm --filter @sickdoc/shared build
+# Same-origin API: the Next server proxies /api/* to the internal API process.
+ARG NEXT_PUBLIC_API_URL=/api
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+RUN pnpm --filter @sickdoc/web build
+
+# ---- runner: node + postgres, everything in one container ----
+FROM node:22-alpine AS runner
+RUN apk add --no-cache openssl su-exec postgresql17 postgresql17-client postgresql17-contrib \
+ || apk add --no-cache openssl su-exec postgresql16 postgresql16-client postgresql16-contrib
+
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1 \
+    HOSTNAME=0.0.0.0 \
+    PGDATA=/var/lib/postgresql/data/pg \
+    PATH="/app/api/node_modules/.bin:$PATH"
+
+WORKDIR /app
+
+# API: dist + prisma + production node_modules
+COPY --from=build-api /app/api /app/api
+# Web: Next standalone (server nests under apps/web/)
+COPY --from=build-web /repo/apps/web/.next/standalone /app/web
+COPY --from=build-web /repo/apps/web/.next/static /app/web/apps/web/.next/static
+COPY --from=build-web /repo/apps/web/public /app/web/apps/web/public
+
+COPY docker/fly-entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh \
+ && mkdir -p /run/postgresql "$PGDATA" \
+ && chown -R postgres:postgres /run/postgresql "$PGDATA"
+
+EXPOSE 3000
+ENTRYPOINT ["/entrypoint.sh"]
